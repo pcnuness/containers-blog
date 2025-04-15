@@ -4,15 +4,15 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.72"
+      version = ">= 5.94.1"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.10"
+      version = ">= 2.36"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.4.1"
+      version = ">= 2.17.0"
     }
   }
 }
@@ -61,7 +61,7 @@ locals {
 #---------------------------------------------------------------
 
 module "eks_blueprints" {
-  source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.27.0"
+  source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.32.1"
 
   cluster_name    = local.cluster_name
   cluster_version = "1.31"
@@ -72,9 +72,9 @@ module "eks_blueprints" {
   cluster_endpoint_private_access = true
 
   managed_node_groups = {
-    mg_5a = {
+    mg_t3a = {
       node_group_name = "managed-ondemand-a"
-      instance_types  = ["m5.xlarge"]
+      instance_types  = ["t3a.medium"]
       min_size        = 1
       max_size        = 4
       desired_size    = var.num_nodes_az1
@@ -86,9 +86,9 @@ module "eks_blueprints" {
         "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
       ]
     }
-    mg_5b = {
+    mg_t3b = {
       node_group_name = "managed-ondemand-b"
-      instance_types  = ["m5.xlarge"]
+      instance_types  = ["t3a.medium"]
       min_size        = 1
       max_size        = 4
       desired_size    = var.num_nodes_az2
@@ -100,9 +100,9 @@ module "eks_blueprints" {
         "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
       ]
     }
-    mg_5c = {
+    mg_t3c = {
       node_group_name = "managed-ondemand-c"
-      instance_types  = ["m5.xlarge"]
+      instance_types  = ["t3a.medium"]
       min_size        = 1
       max_size        = 4
       desired_size    = var.num_nodes_az3
@@ -120,7 +120,7 @@ module "eks_blueprints" {
 }
 
 module "eks_blueprints_kubernetes_addons" {
-  source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.27.0/modules/kubernetes-addons"
+  source = "github.com/aws-ia/terraform-aws-eks-blueprints?ref=v4.32.1/modules/kubernetes-addons"
 
   eks_cluster_id       = module.eks_blueprints.eks_cluster_id
   eks_cluster_endpoint = module.eks_blueprints.eks_cluster_endpoint
