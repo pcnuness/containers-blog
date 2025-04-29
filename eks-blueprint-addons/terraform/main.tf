@@ -17,7 +17,9 @@ terraform {
   }
 }
 
-provider "aws" {}
+provider "aws" {
+  region = "us-east-1"
+}
 
 provider "kubernetes" {
   host                   = module.eks_blueprints.eks_cluster_endpoint
@@ -70,7 +72,7 @@ module "eks_blueprints" {
   private_subnet_ids = module.vpc.private_subnets
 
   cluster_endpoint_private_access = true
-  enable_irsa = false
+  enable_irsa = true
 
   managed_node_groups = {
     mg_t3a = {
@@ -125,7 +127,7 @@ module "eks_blueprints_kubernetes_addons" {
 
   eks_cluster_id       = module.eks_blueprints.eks_cluster_id
   eks_cluster_endpoint = module.eks_blueprints.eks_cluster_endpoint
-  #eks_oidc_provider    = module.eks_blueprints.oidc_provider
+  eks_oidc_provider    = module.eks_blueprints.oidc_provider
   eks_cluster_version  = module.eks_blueprints.eks_cluster_version
 
   # EKS Managed Add-ons
