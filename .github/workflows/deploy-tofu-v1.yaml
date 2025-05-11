@@ -39,7 +39,7 @@ jobs:
 
       - name: Criar bucket do backend se não existir
         run: |
-          BUCKET="${{ steps.aws.outputs.account_id }}-iac-opentofu-backend"
+          BUCKET="${{ steps.aws.outputs.account_id }}-backend-iac-opentofu"
           REGION="${{ env.AWS_REGION }}"
           echo "bucket_name=$BUCKET" >> $GITHUB_ENV
       
