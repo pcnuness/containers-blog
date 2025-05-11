@@ -28,7 +28,7 @@ jobs:
 
       - name: Instalar OpenTofu
         run: |
-          curl -s https://get.opentofu.org/install.sh | bash
+          snap install --classic opentofu
           echo "$HOME/.opentofu/bin" >> $GITHUB_PATH
 
       - name: Inicializar OpenTofu
