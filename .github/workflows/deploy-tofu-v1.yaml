@@ -1,0 +1,109 @@
+name: Deploy Infra with OpenTofu v1
+description: 'Create Resource in AWS using OpenTofu v1'
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        required: true
+        default: dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      WORK_DIR: eks-adr-kubernetes/terraform
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu-version: 1.9.0
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      ######################################
+      # 🔍 TFLint - boas práticas Terraform
+      ######################################
+      - name: Instalar TFLint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          echo "$HOME/.tflint/bin" >> $GITHUB_PATH
+
+      - name: Rodar TFLint
+        run: |
+          tflint --version
+          tflint --recursive
+        working-directory: ${{ env.WORK_DIR }}
+
+      ######################################
+      # 🔐 Checkov - análise de segurança
+      ######################################
+      - name: Instalar Checkov
+        run: pip install checkov
+
+      - name: Rodar Checkov
+        run: |
+          checkov -d . --quiet --framework terraform
+        working-directory: ${{ env.WORK_DIR }}
+
+      ######################################
+      # 💸 Infracost - estimativa de custo
+      ######################################
+      - name: Instalar Infracost
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          echo "$HOME/.infracost/bin" >> $GITHUB_PATH
+
+      - name: Autenticar Infracost
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: infracost configure set api_key $INFRACOST_API_KEY
+
+      - name: Gerar estimativa de custo
+        run: |
+          infracost breakdown --path=. \
+            --terraform-var-file=environments/${{ github.event.inputs.stage }}.tfvars \
+            --format table \
+            --out-file infracost.txt
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: Publicar custo no resumo
+        run: |
+          echo "### 💰 Estimativa de custo (Infracost)" >> $GITHUB_STEP_SUMMARY
+          cat infracost.txt >> $GITHUB_STEP_SUMMARY
+        working-directory: ${{ env.WORK_DIR }}
+
+      ######################################
+      # 🧪 OpenTofu validate/plan/apply
+      ######################################
+      - name: tofu init
+        run: tofu init
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: tofu fmt
+        id: fmt
+        run: tofu fmt -check
+        continue-on-error: true
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: tofu validate
+        run: tofu validate -no-color
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: tofu plan
+        run: |
+          tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: tofu apply
+        run: tofu apply -auto-approve tfplan
+        working-directory: ${{ env.WORK_DIR }}
