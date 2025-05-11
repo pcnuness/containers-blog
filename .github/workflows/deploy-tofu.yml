@@ -1,4 +1,5 @@
 name: Deploy Infra with OpenTofu
+description: 'Create Resource in AWS using OpenTofu'
 
 on:
   workflow_dispatch:
@@ -17,7 +18,7 @@ jobs:
 
     steps:
       - name: OpenTofu
-      - uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@v1
         with:
           tofu-version: 1.9.0
 
