@@ -63,6 +63,15 @@ jobs:
             fi
           fi
 
+      - name: Inicializar OpenTofu com backend S3
+        run: |
+          KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
+          tofu init \
+            -backend-config="bucket=${{ env.bucket_name }}" \
+            -backend-config="key=$KEY_PATH" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+        working-directory: ${{ env.WORK_DIR }}
+        
       #────────────────────────────
       # 3. 🧹 lint → TFLint + fmt + validate
       #────────────────────────────
@@ -125,14 +134,6 @@ jobs:
       #────────────────────────────
       # 6. 📦 provision → tofu plan + apply
       #────────────────────────────
-      - name: Inicializar OpenTofu com backend S3
-        run: |
-          KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
-          tofu init \
-            -backend-config="bucket=${{ env.bucket_name }}" \
-            -backend-config="key=$KEY_PATH" \
-            -backend-config="region=${{ env.AWS_REGION }}"
-        working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu plan
         run: |
