@@ -21,6 +21,13 @@ terraform {
   }
 }
 
+variable "name" {}
+variable "region" {}
+variable "vpc_cidr" {}
+variable "tags" {
+  type = map(string)
+}
+
 #---------------------------------------------------------------
 # EKS Auth and Providers (for bootstrap)
 #---------------------------------------------------------------
@@ -52,12 +59,6 @@ data "aws_availability_zones" "available" {
     name   = "opt-in-status"
     values = ["opt-in-not-required"]
   }
-}
-
-variable "name" {}
-variable "vpc_cidr" {}
-variable "tags" {
-  type = map(string)
 }
 
 locals {
