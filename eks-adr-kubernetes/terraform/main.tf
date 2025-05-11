@@ -54,21 +54,12 @@ data "aws_availability_zones" "available" {
   }
 }
 
-
 variable "name" {}
 variable "cluster_name" {}
 variable "vpc_cidr" {}
-variable "tags" {
+variable "tags_custom" {
   type = map(string)
 }
-
-locals {
-  name         = var.name
-  cluster_name = var.cluster_name
-  vpc_cidr     = var.vpc_cidr
-  tags         = var.tags
-}
-
 
 locals {
   name         = var.variable
