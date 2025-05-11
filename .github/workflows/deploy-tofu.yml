@@ -33,10 +33,15 @@ jobs:
         run: |
           tofu init
 
+      - name: OpenTofu Format
+        id: fmt
+        run: tofu fmt -check
+        continue-on-error: true
+
       - name: Validar OpenTofu
         working-directory: eks-adr-kubernetes/terraform
         run: |
-          tofu validate
+          tofu validate -no-color
 
       - name: Gerar plano
         working-directory: eks-adr-kubernetes/terraform
