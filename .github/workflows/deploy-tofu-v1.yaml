@@ -40,17 +40,23 @@ jobs:
       - name: Criar bucket do backend se não existir
         run: |
           BUCKET="${{ steps.aws.outputs.account_id }}-iac-opentofu-backend"
+          REGION="${{ env.AWS_REGION }}"
           echo "bucket_name=$BUCKET" >> $GITHUB_ENV
-
+      
           if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
             echo "✅ Bucket $BUCKET já existe"
           else
             echo "🚀 Criando bucket $BUCKET"
-            aws s3api create-bucket \
-              --bucket "$BUCKET" \
-              --region ${{ env.AWS_REGION }} \
-              --create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }}
+            if [ "$REGION" = "us-east-1" ]; then
+              aws s3api create-bucket --bucket "$BUCKET"
+            else
+              aws s3api create-bucket \
+                --bucket "$BUCKET" \
+                --region "$REGION" \
+                --create-bucket-configuration LocationConstraint="$REGION"
+            fi
           fi
+
 
       ######################################
       # 🔍 TFLint com suporte a .tfvars
