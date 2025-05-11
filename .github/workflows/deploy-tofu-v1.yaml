@@ -16,6 +16,9 @@ jobs:
       AWS_REGION: us-east-1
 
     steps:
+      #────────────────────────────
+      # 1. 🔄 source → checkout do repositório
+      #────────────────────────────
       - name: Checkout código
         uses: actions/checkout@v3
 
@@ -24,6 +27,9 @@ jobs:
         with:
           tofu-version: 1.9.0
 
+      #────────────────────────────
+      # 2. 🚀 bootstrap → configuração do backend (S3)
+      #────────────────────────────
       - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -42,7 +48,7 @@ jobs:
           BUCKET="${{ steps.aws.outputs.account_id }}-backend-iac-opentofu"
           REGION="${{ env.AWS_REGION }}"
           echo "bucket_name=$BUCKET" >> $GITHUB_ENV
-      
+
           if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
             echo "✅ Bucket $BUCKET já existe"
           else
@@ -57,10 +63,9 @@ jobs:
             fi
           fi
 
-
-      ######################################
-      # 🔍 TFLint com suporte a .tfvars
-      ######################################
+      #────────────────────────────
+      # 3. 🧹 lint → TFLint + fmt + validate
+      #────────────────────────────
       - name: Instalar TFLint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -72,9 +77,19 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
         continue-on-error: true
 
-      ######################################
-      # 🔐 Checkov com tfvars
-      ######################################
+      - name: tofu fmt
+        id: fmt
+        run: tofu fmt -check
+        continue-on-error: true
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: tofu validate
+        run: tofu validate -no-color
+        working-directory: ${{ env.WORK_DIR }}
+
+      #────────────────────────────
+      # 4. 🔐 iac-security → Checkov para políticas de segurança
+      #────────────────────────────
       - name: Instalar Checkov
         run: pip install checkov
 
@@ -87,14 +102,14 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
         continue-on-error: true
 
-      ######################################
-      # 💸 Infracost OFFLINE
-      ######################################
+      #────────────────────────────
+      # 5. 💰 finops-analysis → Infracost offline
+      #────────────────────────────
       - name: Instalar Infracost
         run: |
           curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
           echo "$HOME/.infracost/bin" >> $GITHUB_PATH
-      
+
       - name: Rodar estimativa de custo offline
         run: |
           infracost breakdown \
@@ -106,18 +121,10 @@ jobs:
             --no-cache
         working-directory: ${{ env.WORK_DIR }}
         continue-on-error: true
-      
-      - name: Publicar custo no resumo
-        run: |
-          echo "### 💰 Estimativa de custo (Infracost - Offline)" >> $GITHUB_STEP_SUMMARY
-          cat infracost.txt >> $GITHUB_STEP_SUMMARY
-        working-directory: ${{ env.WORK_DIR }}
-        continue-on-error: true
 
-      ######################################
-      # 🧪 OpenTofu validate/plan/apply
-      ######################################
-
+      #────────────────────────────
+      # 6. 📦 provision → tofu plan + apply
+      #────────────────────────────
       - name: Inicializar OpenTofu com backend S3
         run: |
           KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
@@ -127,23 +134,21 @@ jobs:
             -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ${{ env.WORK_DIR }}
 
-      - name: tofu fmt
-        id: fmt
-        run: tofu fmt -check
-        continue-on-error: true
-        working-directory: ${{ env.WORK_DIR }}
-
-      - name: tofu validate
-        run: |
-          tofu validate -no-color
-        working-directory: ${{ env.WORK_DIR }}
-
       - name: tofu plan
         run: |
           tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu apply
-        run: |
-          tofu apply -auto-approve tfplan
+        run: tofu apply -auto-approve tfplan
         working-directory: ${{ env.WORK_DIR }}
+
+      #────────────────────────────
+      # 7. 📊 reporting → resumo no GITHUB_STEP_SUMMARY
+      #────────────────────────────
+      - name: Publicar custo no resumo
+        run: |
+          echo "### 💰 Estimativa de custo (Infracost - Offline)" >> $GITHUB_STEP_SUMMARY
+          cat infracost.txt >> $GITHUB_STEP_SUMMARY
+        working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
