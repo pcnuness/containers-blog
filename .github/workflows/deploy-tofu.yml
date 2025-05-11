@@ -1,0 +1,50 @@
+name: Deploy Infra with OpenTofu
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Ambiente (dev, hml, prd)"
+        required: true
+        default: hml
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Instalar OpenTofu
+        run: |
+          curl -s https://get.opentofu.org/install.sh | bash
+          echo "$HOME/.opentofu/bin" >> $GITHUB_PATH
+
+      - name: Inicializar OpenTofu
+        working-directory: eks-adr-kubernetes/terraform
+        run: |
+          tofu init
+
+      - name: Validar OpenTofu
+        working-directory: eks-adr-kubernetes/terraform
+        run: |
+          tofu validate
+
+      - name: Gerar plano
+        working-directory: eks-adr-kubernetes/terraform
+        run: |
+          tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
+
+      - name: Aplicar plano
+        working-directory: eks-adr-kubernetes/terraform
+        run: |
+          tofu apply -auto-approve tfplan
+

@@ -47,7 +47,7 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name = "tah-demo-cluster"
+  name = "toh-demo-cluster"
   cluster_name = local.name
 
   vpc_cidr = "10.0.0.0/16"
