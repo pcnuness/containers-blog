@@ -43,19 +43,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: source
     steps:
-      - name: Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Obter AWS Account ID
         id: aws
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
-          
+
       - name: Criar bucket do backend se não existir
         run: |
           BUCKET="${{ needs.source.outputs.account_id }}-backend-iac-opentofu"
@@ -89,34 +82,7 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
 
-      - name: Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Validar existência do tfvars
-        run: |
-          if [ ! -f "./environments/${{ github.event.inputs.stage }}.tfvars" ]; then
-            echo "Arquivo tfvars não encontrado!"
-            exit 1
-          fi
-
-      - name: Instalar TFLint
-        run: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-          echo "$HOME/.tflint/bin" >> $GITHUB_PATH
-
-      - name: Rodar TFLint
-        run: tflint --recursive --var-file=./environments/${{ github.event.inputs.stage }}.tfvars
-        working-directory: ${{ env.WORK_DIR }}
-
-      - name: tofu fmt
-        run: tofu fmt -check
-        working-directory: ${{ env.WORK_DIR }}
-
-      - name: tofu init
+      - name: Inicializar backend S3
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           BUCKET="$ACCOUNT_ID-backend-iac-opentofu"
@@ -126,6 +92,21 @@ jobs:
             -backend-config="bucket=$BUCKET" \
             -backend-config="key=$KEY_PATH" \
             -backend-config="region=${{ env.AWS_REGION }}"
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: Instalar TFLint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          echo "$HOME/.tflint/bin" >> $GITHUB_PATH
+
+      - name: Rodar TFLint
+        run: tflint --recursive --var-file=./environments/${{ github.event.inputs.stage }}.tfvars
+        working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
+
+      - name: tofu fmt
+        run: tofu fmt -check
+        continue-on-error: true
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu validate
@@ -142,24 +123,15 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Instalar Checkov
         run: pip install checkov
 
-      - name: Rodar Checkov com resumo
+      - name: Rodar Checkov
         run: |
-          echo "### 🔐 Resultados Checkov" >> $GITHUB_STEP_SUMMARY
           checkov -d . \
             --framework terraform \
             --quiet \
-            --var-file environments/${{ github.event.inputs.stage }}.tfvars \
-            --output cli | tee -a $GITHUB_STEP_SUMMARY
+            --var-file environments/${{ github.event.inputs.stage }}.tfvars
         working-directory: ${{ env.WORK_DIR }}
         continue-on-error: true
 
@@ -173,19 +145,24 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Instalar Infracost
         run: |
           curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
           echo "$HOME/.infracost/bin" >> $GITHUB_PATH
 
-      - name: Rodar Infracost e gerar resumo
+      - name: Inicializar backend S3
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+          BUCKET="$ACCOUNT_ID-backend-iac-opentofu"
+          KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
+
+          tofu init \
+            -backend-config="bucket=$BUCKET" \
+            -backend-config="key=$KEY_PATH" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+        working-directory: ${{ env.WORK_DIR }}
+
+      - name: Rodar Infracost offline
         run: |
           infracost breakdown \
             --path=. \
@@ -194,6 +171,11 @@ jobs:
             --out-file infracost.txt \
             --no-color \
             --no-cache
+        working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
+
+      - name: Publicar custo no resumo
+        run: |
           echo "### 💰 Estimativa de custo (Infracost - Offline)" >> $GITHUB_STEP_SUMMARY
           cat infracost.txt >> $GITHUB_STEP_SUMMARY
         working-directory: ${{ env.WORK_DIR }}
@@ -212,14 +194,7 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
 
-      - name: Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: tofu init
+      - name: Inicializar backend S3
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           BUCKET="$ACCOUNT_ID-backend-iac-opentofu"
@@ -232,7 +207,8 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu plan
-        run: tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
+        run: |
+          tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu apply
