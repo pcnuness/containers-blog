@@ -55,7 +55,6 @@ data "aws_availability_zones" "available" {
 }
 
 variable "name" {}
-variable "cluster_name" {}
 variable "vpc_cidr" {}
 variable "tags" {
   type = map(string)
