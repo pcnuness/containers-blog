@@ -57,13 +57,13 @@ data "aws_availability_zones" "available" {
 variable "name" {}
 variable "cluster_name" {}
 variable "vpc_cidr" {}
-variable "tags_custom" {
+variable "tags" {
   type = map(string)
 }
 
 locals {
-  name         = var.variable
-  cluster_name = var.cluster_name
+  name         = var.name
+  cluster_name = local.name
   vpc_cidr     = var.vpc_cidr
   azs          = slice(data.aws_availability_zones.available.names, 0, 3)
 
