@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: OpenTofu
       - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu-version: 1.9.0
 
       - name: Checkout código
         uses: actions/checkout@v3
@@ -28,7 +30,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-          
+
       - name: Inicializar OpenTofu
         working-directory: eks-adr-kubernetes/terraform
         run: |
