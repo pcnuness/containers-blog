@@ -28,7 +28,7 @@ jobs:
 
       - name: Instalar OpenTofu
         run: |
-          snap install --classic opentofu
+          sudo snap install --classic opentofu
           echo "$HOME/.opentofu/bin" >> $GITHUB_PATH
 
       - name: Inicializar OpenTofu
