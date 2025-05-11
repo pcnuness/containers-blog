@@ -41,8 +41,6 @@ jobs:
       - name: Gerar plano
         working-directory: eks-adr-kubernetes/terraform
         run: |
-          ls -l 
-          pwd
           tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
 
       - name: Aplicar plano
