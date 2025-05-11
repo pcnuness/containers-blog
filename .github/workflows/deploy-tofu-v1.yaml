@@ -36,12 +36,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Obter AWS Account ID
-        id: aws
-        run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
-
   #────────────────────────────
   # 2. 🚀 bootstrap
   #────────────────────────────
@@ -56,6 +50,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Obter AWS Account ID
+        id: aws
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          
       - name: Criar bucket do backend se não existir
         run: |
           BUCKET="${{ needs.source.outputs.account_id }}-backend-iac-opentofu"
