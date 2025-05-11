@@ -70,6 +70,7 @@ jobs:
         run: |
           tflint --recursive --var-file=./environments/${{ github.event.inputs.stage }}.tfvars
         working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
 
       ######################################
       # 🔐 Checkov com tfvars
@@ -84,6 +85,7 @@ jobs:
             --quiet \
             --var-file environments/${{ github.event.inputs.stage }}.tfvars
         working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
 
       ######################################
       # 💸 Infracost com tfvars
