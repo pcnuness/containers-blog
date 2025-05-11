@@ -105,12 +105,14 @@ jobs:
             --no-color \
             --no-cache
         working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
       
       - name: Publicar custo no resumo
         run: |
           echo "### 💰 Estimativa de custo (Infracost - Offline)" >> $GITHUB_STEP_SUMMARY
           cat infracost.txt >> $GITHUB_STEP_SUMMARY
         working-directory: ${{ env.WORK_DIR }}
+        continue-on-error: true
 
       ######################################
       # 🧪 OpenTofu validate/plan/apply
