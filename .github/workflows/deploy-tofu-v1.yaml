@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORK_DIR: eks-adr-kubernetes/terraform
+      AWS_REGION: us-east-1
 
     steps:
       - name: Checkout código
@@ -28,10 +29,31 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Obter AWS Account ID
+        id: aws
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+
+      - name: Criar bucket do backend se não existir
+        run: |
+          BUCKET="${{ steps.aws.outputs.account_id }}-iac-opentofu-backend"
+          echo "bucket_name=$BUCKET" >> $GITHUB_ENV
+
+          if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "✅ Bucket $BUCKET já existe"
+          else
+            echo "🚀 Criando bucket $BUCKET"
+            aws s3api create-bucket \
+              --bucket "$BUCKET" \
+              --region ${{ env.AWS_REGION }} \
+              --create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }}
+          fi
 
       ######################################
-      # 🔍 TFLint - boas práticas Terraform
+      # 🔍 TFLint com suporte a .tfvars
       ######################################
       - name: Instalar TFLint
         run: |
@@ -40,23 +62,25 @@ jobs:
 
       - name: Rodar TFLint
         run: |
-          tflint --version
-          tflint --recursive
+          tflint --recursive --var-file=./environments/${{ github.event.inputs.stage }}.tfvars
         working-directory: ${{ env.WORK_DIR }}
 
       ######################################
-      # 🔐 Checkov - análise de segurança
+      # 🔐 Checkov com tfvars
       ######################################
       - name: Instalar Checkov
         run: pip install checkov
 
       - name: Rodar Checkov
         run: |
-          checkov -d . --quiet --framework terraform
+          checkov -d . \
+            --framework terraform \
+            --quiet \
+            --var-file environments/${{ github.event.inputs.stage }}.tfvars
         working-directory: ${{ env.WORK_DIR }}
 
       ######################################
-      # 💸 Infracost - estimativa de custo
+      # 💸 Infracost com tfvars
       ######################################
       - name: Instalar Infracost
         run: |
@@ -71,7 +95,7 @@ jobs:
       - name: Gerar estimativa de custo
         run: |
           infracost breakdown --path=. \
-            --terraform-var-file=environments/${{ github.event.inputs.stage }}.tfvars \
+            --terraform-var-file="environments/${{ github.event.inputs.stage }}.tfvars" \
             --format table \
             --out-file infracost.txt
         working-directory: ${{ env.WORK_DIR }}
@@ -85,8 +109,14 @@ jobs:
       ######################################
       # 🧪 OpenTofu validate/plan/apply
       ######################################
-      - name: tofu init
-        run: tofu init
+
+      - name: Inicializar OpenTofu com backend S3
+        run: |
+          KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
+          tofu init \
+            -backend-config="bucket=${{ env.bucket_name }}" \
+            -backend-config="key=$KEY_PATH" \
+            -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu fmt
@@ -96,7 +126,8 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu validate
-        run: tofu validate -no-color
+        run: |
+          tofu validate -no-color
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu plan
@@ -105,5 +136,6 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu apply
-        run: tofu apply -auto-approve tfplan
+        run: |
+          tofu apply -auto-approve tfplan
         working-directory: ${{ env.WORK_DIR }}
