@@ -7,10 +7,6 @@ on:
       stage:
         required: true
         default: dev
-      aws-access-key-id:
-        description: 'The aws-access-key-id used to authenticate with AWS'
-      aws-secret-access-key:
-        description: 'The aws-secret-access-key used to authenticate with AWS'
 
 jobs:
   deploy:
