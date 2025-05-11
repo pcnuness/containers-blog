@@ -88,29 +88,27 @@ jobs:
         continue-on-error: true
 
       ######################################
-      # 💸 Infracost com tfvars
+      # 💸 Infracost OFFLINE
       ######################################
       - name: Instalar Infracost
         run: |
           curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
           echo "$HOME/.infracost/bin" >> $GITHUB_PATH
-
-      - name: Autenticar Infracost
-        env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
-        run: infracost configure set api_key $INFRACOST_API_KEY
-
-      - name: Gerar estimativa de custo
+      
+      - name: Rodar estimativa de custo offline
         run: |
-          infracost breakdown --path=. \
+          infracost breakdown \
+            --path=. \
             --terraform-var-file="environments/${{ github.event.inputs.stage }}.tfvars" \
             --format table \
-            --out-file infracost.txt
+            --out-file infracost.txt \
+            --no-color \
+            --no-cache
         working-directory: ${{ env.WORK_DIR }}
-
+      
       - name: Publicar custo no resumo
         run: |
-          echo "### 💰 Estimativa de custo (Infracost)" >> $GITHUB_STEP_SUMMARY
+          echo "### 💰 Estimativa de custo (Infracost - Offline)" >> $GITHUB_STEP_SUMMARY
           cat infracost.txt >> $GITHUB_STEP_SUMMARY
         working-directory: ${{ env.WORK_DIR }}
 
