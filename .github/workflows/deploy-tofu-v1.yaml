@@ -93,9 +93,14 @@ jobs:
 
       - name: Inicializar backend S3
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           BUCKET="$ACCOUNT_ID-backend-iac-opentofu"
           KEY_PATH="${{ github.repository }}/eks-adr-kubernetes/terraform/terraform.tfstate"
+
+          echo "Bucket: $BUCKET"
+          echo "Key: $KEY_PATH"
+          echo "Region: ${{ env.AWS_REGION }}"
 
           tofu init \
             -backend-config="bucket=$BUCKET" \

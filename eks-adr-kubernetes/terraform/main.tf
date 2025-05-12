@@ -47,6 +47,7 @@ provider "aws" {
 
 data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
+  depends_on = [module.eks]
 }
 
 provider "kubernetes" {
@@ -137,6 +138,9 @@ module "eks" {
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
 
+  authentication_mode                      = "API_AND_CONFIG_MAP"
+  enable_cluster_creator_admin_permissions = true
+  
   cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   create_cloudwatch_log_group            = true
   cloudwatch_log_group_retention_in_days = 7
@@ -166,11 +170,13 @@ module "eks" {
           }
         }
       }
-      additional_iam_policies = [
-        "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess",
-        "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
-        "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
-      ]
+      iam_role_attach_cni_policy = true
+      iam_role_additional_policies = {
+        AmazonEKSWorkerNodePolicy : "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+        AmazonEKS_CNI_Policy : "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+        AmazonEC2ContainerRegistryReadOnly : "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+        AmazonSSMManagedInstanceCore : "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
     }
   }
 
