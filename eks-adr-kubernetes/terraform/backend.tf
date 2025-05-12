@@ -1,9 +1,8 @@
-/*
 terraform {
   backend "s3" {}
 }
-*/
 
+/*
 # EXEC LOCAL
 terraform {
   backend "s3" {
@@ -12,3 +11,4 @@ terraform {
     region         = "us-east-1"
   }
 }
+*/
