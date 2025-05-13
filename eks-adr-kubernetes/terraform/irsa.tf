@@ -20,7 +20,7 @@ module "irsa_aws_lb_controller" {
 
 }
 
-module "irsa_aws_lb_controller" {
+module "irsa_ingress_nginx" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.30.0"
 
