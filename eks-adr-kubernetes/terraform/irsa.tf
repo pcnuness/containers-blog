@@ -16,6 +16,10 @@ module "irsa_aws_lb_controller" {
     }
   }
 
+  role_policy_arns = {
+    ElasticLoadBalancingReadOnly = "arn:aws:iam::aws:policy/ElasticLoadBalancingReadOnly"
+  }
+
   tags = local.tags
 
 }
