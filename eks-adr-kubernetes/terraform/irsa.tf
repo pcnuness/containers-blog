@@ -11,7 +11,7 @@ module "irsa_aws_lb_controller" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:aws-load-balancer-controller-sa"]
     }
   }
@@ -34,7 +34,7 @@ module "vpc_cni_ipv4_irsa_role" {
 
   oidc_providers = {
     ex = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:aws-node"]
     }
   }
@@ -61,7 +61,7 @@ module "karpenter_controller_irsa_role" {
 
   oidc_providers = {
     ex = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["karpenter:karpenter"]
     }
   }
@@ -89,7 +89,7 @@ module "irsa_secrets_store_provider_aws" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:secrets-store-csi-driver"]
     }
   }
@@ -111,7 +111,7 @@ module "irsa_external_secrets" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:external-secrets"]
     }
   }
@@ -133,7 +133,7 @@ module "irsa_ebs_csi_driver" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
     }
   }
@@ -150,7 +150,7 @@ module "irsa_efs_csi_driver" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:efs-csi-controller-sa"]
     }
   }
@@ -168,7 +168,7 @@ module "velero_irsa_role" {
 
   oidc_providers = {
     ex = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["velero:velero"]
     }
   }
@@ -209,7 +209,7 @@ module "irsa_fluentbit" {
 
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider
+      provider_arn               = module.eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:fluentbit"]
     }
   }
