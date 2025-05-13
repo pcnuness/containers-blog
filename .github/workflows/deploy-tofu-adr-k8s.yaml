@@ -1,4 +1,4 @@
-name: 'Deploy Infra usind folder eks-adr-kubernetes'
+name: 'Deploy Infra folder eks-adr-kubernetes'
 description: 'Create Resource in AWS using OpenTofu eks-adr-kubernetes'
 
 on:
