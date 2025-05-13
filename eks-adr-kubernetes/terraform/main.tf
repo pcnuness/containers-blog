@@ -145,6 +145,10 @@ module "eks" {
   create_cloudwatch_log_group            = true
   cloudwatch_log_group_retention_in_days = 7
 
+  node_security_group_tags = {
+    "kubernetes.io/cluster/${local.aws_eks.cluster_name}" = null
+  }
+
   eks_managed_node_groups = {
     for idx, subnet in module.vpc.private_subnets :
     "managed-worknode-${idx}" => {
