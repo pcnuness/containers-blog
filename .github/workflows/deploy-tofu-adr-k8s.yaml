@@ -249,7 +249,7 @@ jobs:
 
       - name: tofu plan
         run: |
-          tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan
+          tofu plan -var-file="environments/${{ github.event.inputs.stage }}.tfvars" -out=tfplan -compact-warnings
         working-directory: ${{ env.WORK_DIR }}
 
       - name: tofu apply
