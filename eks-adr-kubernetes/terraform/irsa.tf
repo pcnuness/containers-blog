@@ -24,6 +24,23 @@ module "irsa_aws_lb_controller" {
 
 }
 
+module "external_dns_irsa_role" {
+  source = "../../modules/iam-role-for-service-accounts-eks"
+
+  role_name                     = "cpe-${local.cluster_name}-external-dns-irsa"
+  attach_external_dns_policy    = true
+  external_dns_hosted_zone_arns = ["arn:aws:route53:::hostedzone/211125666607.realhandsonlabs.net"]
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:external-dns"]
+    }
+  }
+
+  tags = local.tags
+}
+
 #---------------------------------------------------------------
 # VPC CNI - AWS-NODES
 #---------------------------------------------------------------
