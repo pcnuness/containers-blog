@@ -1,14 +1,15 @@
+kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
   namespace: kube-prometheus-stack
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
-    - host: grafana.ops.905418282044.realhandsonlabs.net
+    - host: grafana.ops.381491929425.realhandsonlabs.net
       http:
         paths:
           - path: /
@@ -18,3 +19,4 @@ spec:
                 name: kube-prometheus-stack-grafana
                 port:
                   number: 80
+EOF
