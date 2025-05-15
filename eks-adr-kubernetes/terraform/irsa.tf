@@ -12,7 +12,7 @@ module "irsa_aws_lb_controller" {
   oidc_providers = {
     main = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:aws-load-balancer-controller-sa"]
+      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
     }
   }
 
@@ -25,11 +25,11 @@ module "irsa_aws_lb_controller" {
 }
 
 module "external_dns_irsa_role" {
-  source = "../../modules/iam-role-for-service-accounts-eks"
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
   role_name                     = "cpe-${local.cluster_name}-external-dns-irsa"
   attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = ["arn:aws:route53:::hostedzone/211125666607.realhandsonlabs.net"]
+  external_dns_hosted_zone_arns = ["arn:aws:route53:::hostedzone/767397938339.realhandsonlabs.net"]
 
   oidc_providers = {
     ex = {
