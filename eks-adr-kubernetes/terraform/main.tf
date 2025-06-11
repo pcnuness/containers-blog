@@ -129,11 +129,11 @@ module "eks" {
   version = "~> 20.35"
 
   cluster_name    = local.cluster_name
-  cluster_version = "1.31"
+  cluster_version = local.eks_version
   enable_irsa     = true
 
-  subnet_ids = module.vpc.private_subnets
   vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
@@ -147,6 +147,56 @@ module "eks" {
 
   node_security_group_tags = {
     "kubernetes.io/cluster/${local.cluster_name}" = null
+  }
+
+  node_security_group_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    },
+    ingress_cluster_to_node_all_traffic = {
+      description                   = "Cluster API to Nodegroup all traffic"
+      protocol                      = "-1"
+      from_port                     = 0
+      to_port                       = 0
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  }
+
+  eks_managed_node_group_defaults = {
+    attach_cluster_primary_security_group = true
+    iam_role_attach_cni_policy = true
+    iam_role_additional_policies = {
+      AmazonEKSWorkerNodePolicy : "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+      AmazonEKS_CNI_Policy : "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+      AmazonEC2ContainerRegistryReadOnly : "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+      AmazonSSMManagedInstanceCore : "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    }
+    capacity_type = "ON_DEMAND"
+    update_config = {
+      max_unavailable_percentage = 33
+    }
+    labels = {
+      "worknodes"                               = "default"
+      "cpe.plataform.com/node-type" = "critical-addons"
+    }
+    taints = {
+      addons = {
+        key    = "CriticalAddonsOnly"
+        value  = "true"
+        effect = "PREFER_NO_SCHEDULE"
+      }
+    }
+    tags = {
+      worknodes = "default"
+      type      = "critical-addons"
+    }
+
   }
 
   eks_managed_node_groups = {
