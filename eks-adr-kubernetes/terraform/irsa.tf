@@ -123,7 +123,7 @@ module "ebs_csi_driver_irsa" {
   attach_ebs_csi_policy = true
   oidc_providers = {
     main = {
-      provider_arn               = local.oidc_provider_arn
+      provider_arn               = local.aws_eks.oidc_provider_arn
       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
     }
   }
@@ -208,7 +208,7 @@ module "adot_irsa" {
   }
   oidc_providers = {
     main = {
-      provider_arn               = local.oidc_provider_arn
+      provider_arn               = local.aws_eks.oidc_provider_arn
       namespace_service_accounts = ["opentelemetry:adot-collector-sa"]
     }
   }
