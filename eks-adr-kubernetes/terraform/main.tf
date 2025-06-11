@@ -25,6 +25,10 @@ variable "name" {
   type = string
 }
 
+variable "eks_name" {
+  type = string
+}
+
 variable "eks_version" {
   type = string
 }
@@ -77,7 +81,7 @@ data "aws_availability_zones" "available" {
 
 locals {
   name            = var.name
-  cluster_name    = local.name
+  cluster_name    = var.eks_name
   cluster_version = var.eks_version
   vpc_cidr        = var.vpc_cidr
   azs             = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -134,7 +138,7 @@ module "eks" {
   version = "~> 20.35"
 
   cluster_name    = local.cluster_name
-  cluster_version = local.eks_version
+  cluster_version = local.cluster_version
   enable_irsa     = true
 
   vpc_id     = module.vpc.vpc_id
