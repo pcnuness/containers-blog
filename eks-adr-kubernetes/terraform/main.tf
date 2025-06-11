@@ -25,6 +25,10 @@ variable "name" {
   type = string
 }
 
+variable "eks_version" {
+  type = string
+}
+
 variable "region" {
   type = string
 }
@@ -72,10 +76,11 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  name         = var.name
-  cluster_name = local.name
-  vpc_cidr     = var.vpc_cidr
-  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
+  name            = var.name
+  cluster_name    = local.name
+  cluster_version = var.eks_version
+  vpc_cidr        = var.vpc_cidr
+  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
 
   tags = {
     Blueprint = local.cluster_name,
