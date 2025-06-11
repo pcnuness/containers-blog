@@ -1,4 +1,16 @@
 # values/argocd-bootstrap.yaml
+
+global:
+  priorityClassName: system-cluster-critical
+  nodeSelector:
+    cpe.plataform.com/node-group: critical-addons
+    kubernetes.io/os: linux
+  tolerations:
+    - key: cpe.plataform.com/node-group
+      operator: Equal
+      value: critical-addons
+      effect: NoSchedule
+
 configs:
   params:
     server.insecure: true

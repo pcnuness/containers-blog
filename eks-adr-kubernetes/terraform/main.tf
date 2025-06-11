@@ -192,7 +192,7 @@ module "eks" {
     }
     labels = {
       "worknodes"                               = "default"
-      "cpe.plataform.com/node-type" = "critical-addons"
+      "cpe.plataform.com/node-group" = "critical-addons"
     }
     taints = {
       addons = {
