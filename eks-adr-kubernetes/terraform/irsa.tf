@@ -1,15 +1,21 @@
-#---------------------------------------------------------------
-# IRSA AUTOSCALER
-#---------------------------------------------------------------
-
+# ==================================================================
+# MODULE - KARPENTER - AWS EKS
+# ==================================================================
+ 
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 19.21"
-
-  cluster_name                               = module.eks.cluster_name
-  irsa_oidc_provider_arn                     = module.eks.oidc_provider_arn
-  enable_karpenter_instance_profile_creation = true
-  iam_role_additional_policies = {
+  version = "~> 20.35"
+ 
+  cluster_name                    = local.cluster_name
+  enable_v1_permissions           = true
+  iam_role_use_name_prefix        = false
+  iam_role_name                   = "${local.cluster_name}-karpenter-controller-irsa"
+  node_iam_role_use_name_prefix   = false
+  node_iam_role_name              = "${local.cluster_name}-karpenter-node-irsa"
+  enable_pod_identity             = true
+  create_pod_identity_association = true
+  namespace                       = "karpenter"
+  node_iam_role_additional_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 }
