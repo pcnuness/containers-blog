@@ -31,10 +31,10 @@ module "eks_addons" {
   source  = "aws-ia/eks-blueprints-addons/aws"
   version = "~> 1.21"
 
-  cluster_name      = local.cluster_name
-  cluster_version   = local.cluster_version
-  cluster_endpoint  = local.cluster_endpoint
-  oidc_provider_arn = local.oidc_provider_arn
+  cluster_name      = local.aws_eks.cluster_name
+  cluster_version   = local.aws_eks.cluster_version
+  cluster_endpoint  = local.aws_eks.cluster_endpoint
+  oidc_provider_arn = local.aws_eks.oidc_provider_arn
 
   eks_addons = {
     # ==================================================================
@@ -74,5 +74,5 @@ module "eks_addons" {
   }
 
   depends_on = [module.eks]
-  
+
 }
