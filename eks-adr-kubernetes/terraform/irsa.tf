@@ -108,21 +108,19 @@ module "irsa_external_secrets" {
 # EBS & EFS
 #---------------------------------------------------------------
 
-module "irsa_ebs_csi_driver" {
+module "ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.30.0"
+  version = "~> 5.54"
 
-  role_name             = "cpe-${local.cluster_name}-ebs-csi-controller-irsa"
+  role_name             = "${local.cluster_name}-aws-ebs-csi-driver-irsa"
+  role_description      = "EKS IRSA for AWS EBS CSI Driver in ${local.cluster_name} cluster"
   attach_ebs_csi_policy = true
-
   oidc_providers = {
     main = {
-      provider_arn               = module.eks.oidc_provider_arn
+      provider_arn               = local.oidc_provider_arn
       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
     }
   }
-
-  tags = local.tags
 }
 
 module "irsa_efs_csi_driver" {
@@ -185,4 +183,27 @@ module "irsa_fluentbit" {
   }
 
   tags = local.tags
+}
+
+# ==================================================================
+# MODULE - AWS IAM - EKS IRSA ADOT
+# ==================================================================
+
+module "adot_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.54"
+
+  role_name        = "${local.cluster_name}-adot-collector-irsa"
+  role_description = "EKS IRSA for ADOT Collector in ${local.cluster_name} cluster"
+  role_policy_arns = {
+    prometheus = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
+    xray       = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+    cloudwatch = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  }
+  oidc_providers = {
+    main = {
+      provider_arn               = local.oidc_provider_arn
+      namespace_service_accounts = ["opentelemetry:adot-collector-sa"]
+    }
+  }
 }
