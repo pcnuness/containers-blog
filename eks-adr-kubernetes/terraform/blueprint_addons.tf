@@ -72,4 +72,7 @@ module "eks_addons" {
       configuration_values     = jsonencode(yamldecode(file("${path.root}/values/aws-ebs-csi-driver.yaml")))
     }
   }
+
+  depends_on = [module.eks]
+  
 }
