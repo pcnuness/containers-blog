@@ -80,6 +80,7 @@ module "adot_irsa" {
       namespace_service_accounts = ["opentelemetry:adot-collector"]
     }
   }
+  depends_on = [module.eks]
 }
 
 # ==================================================================
@@ -102,6 +103,7 @@ module "karpenter" {
   node_iam_role_additional_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
+  depends_on = [module.eks]
 }
 
 #module "external_dns_irsa" {
