@@ -2,7 +2,6 @@ locals {
   name              = var.name
   cluster_name      = var.eks_name
   cluster_version   = var.eks_version
-  cluster_version   = var.eks_version
   cluster_endpoint  = module.eks.cluster_endpoint
   oidc_provider_arn = module.eks.oidc_provider_arn
   vpc_cidr          = var.vpc_cidr
