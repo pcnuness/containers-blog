@@ -247,26 +247,6 @@ module "eks" {
 }
 
 #---------------------------------------------------------------
-# ArgoCD Bootstrap (via Helm Chart)
-#---------------------------------------------------------------
-resource "helm_release" "argocd" {
-  provider   = helm
-  name       = "argocd"
-  namespace  = "argocd"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  version    = "5.46.8"
-
-  create_namespace = true
-
-  values = [
-    file("${path.module}/values/argocd-bootstrap.yaml")
-  ]
-
-  depends_on = [module.eks]
-}
-
-#---------------------------------------------------------------
 # Outputs
 #---------------------------------------------------------------
 output "cluster_name" {
@@ -284,4 +264,25 @@ output "oidc_provider_arn" {
 output "kubectl_config" {
   value = "aws eks --region us-east-1 update-kubeconfig --name ${module.eks.cluster_name}"
 }
+
+
+#---------------------------------------------------------------
+# ArgoCD Bootstrap (via Helm Chart)
+#---------------------------------------------------------------
+#resource "helm_release" "argocd" {
+#  provider   = helm
+#  name       = "argocd"
+#  namespace  = "argocd"
+#  repository = "https://argoproj.github.io/argo-helm"
+#  chart      = "argo-cd"
+#  version    = "5.46.8"
+#
+#  create_namespace = true
+#
+#  values = [
+#    file("${path.module}/values/argocd-bootstrap.yaml")
+#  ]
+#
+#  depends_on = [module.eks]
+#}
 
