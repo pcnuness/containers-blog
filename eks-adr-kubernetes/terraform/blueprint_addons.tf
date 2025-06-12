@@ -1,40 +1,11 @@
-locals {
-  aws_eks = {
-    cluster_name      = var.eks_name
-    cluster_version   = var.eks_version
-    cluster_endpoint  = module.eks.cluster_endpoint
-    oidc_provider_arn = module.eks.oidc_provider_arn
-    
-    cluster_addon_versions = {
-      # ==================================================================
-      # CORE NETWORKING
-      # ==================================================================
-      coredns    = "v1.11.4-eksbuild.14"
-      kube_proxy = "v1.32.3-eksbuild.7"
-      # ==================================================================
-      # CORE OBSERVABILITY
-      # ==================================================================
-      adot = "v0.117.0-eksbuild.1"
-      # ==================================================================
-      # CORE SECURITY
-      # ==================================================================
-      eks_pod_identity_agent = "v1.3.7-eksbuild.2"
-      # ==================================================================
-      # CORE STORAGE
-      # ==================================================================
-      aws_ebs_csi_driver = "v1.44.0-eksbuild.1"
-    }
-  }
-}
-
 module "eks_addons" {
   source  = "aws-ia/eks-blueprints-addons/aws"
   version = "~> 1.21"
 
-  cluster_name      = local.aws_eks.cluster_name
-  cluster_version   = local.aws_eks.cluster_version
-  cluster_endpoint  = local.aws_eks.cluster_endpoint
-  oidc_provider_arn = local.aws_eks.oidc_provider_arn
+  cluster_name      = local.cluster_name
+  cluster_version   = local.cluster_version
+  cluster_endpoint  = local.cluster_endpoint
+  oidc_provider_arn = local.oidc_provider_arn
 
   eks_addons = {
     # ==================================================================
