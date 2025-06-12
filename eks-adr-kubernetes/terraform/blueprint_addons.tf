@@ -20,14 +20,6 @@ module "eks_addons" {
       configuration_values = jsonencode(yamldecode(file("${path.root}/values/kube-proxy.yaml")))
     }
     # ==================================================================
-    # FOUNDATION OBSERVABILITY - AWS ADDONS NEEDED FOR EKS OPERATIONS
-    # ==================================================================
-    adot = {
-      addon_version            = local.aws_eks.cluster_addon_versions.adot
-      service_account_role_arn = module.adot_irsa.iam_role_arn
-      configuration_values     = jsonencode(yamldecode(file("${path.root}/values/adot.yaml")))
-    }
-    # ==================================================================
     # FOUNDATION SECURITY - AWS ADDONS NEEDED FOR EKS OPERATIONS
     # ==================================================================
     eks-pod-identity-agent = {
