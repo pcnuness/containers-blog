@@ -1,5 +1,5 @@
 # ==================================================================
-# MODULE - ALB - AWS EKS
+# ALB - AWS EKS
 # ==================================================================
 
 module "aws_lb_controller_irsa" {
@@ -24,7 +24,7 @@ module "aws_lb_controller_irsa" {
 }
 
 # ==================================================================
-# MODULE - EBS & EFS - AWS EKS
+# EBS & EFS - AWS EKS
 # ==================================================================
 
 module "ebs_csi_driver_irsa" {
@@ -60,7 +60,31 @@ module "efs_csi_driver_irsa" {
 }
 
 # ==================================================================
-# MODULE - ADOT - AWS EKS
+# Crossplane - AWS EKS
+# ==================================================================
+
+module "crossplane_irsa_aws" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.14"
+
+  role_name_prefix = "${local.cluster_name}-crossplane-irsa"
+
+  role_policy_arns = {
+    policy = "arn:aws:iam::aws:policy/AdministratorAccess"
+  }
+
+  oidc_providers = {
+    main = {
+      provider_arn               = local.oidc_provider_arn
+      namespace_service_accounts = ["crossplane-system:provider-aws"]
+    }
+  }
+
+  tags = local.tags
+}
+
+# ==================================================================
+# ADOT - AWS EKS
 # ==================================================================
 
 module "adot_irsa" {
